@@ -147,7 +147,7 @@ func (repository *ProfileRepository) getProfileDBMysql(userID int) (helpers.ApiR
 	return helpers.ApiResponse{Message: "Success get data profile retrieved from database.", Data: profile}, http.StatusOK, nil
 }
 
-func (repository *ProfileRepository) UpdateProfileRepository(profile *request.ProfileUpdate) (helpers.ApiResponse, int, error) {
+func (repository *ProfileRepository) UpdateProfileRepository(profile *request.ProfileUpdate, profileID *int) (helpers.ApiResponse, int, error) {
 	var existingProfile request.ProfileUpdate
 
 	ctx, cancel := context2.WithTimeout(context2.Background(), 4*time.Second)
@@ -164,7 +164,7 @@ func (repository *ProfileRepository) UpdateProfileRepository(profile *request.Pr
 		return helpers.ApiResponse{Message: "Failed to prepare statement"}, http.StatusInternalServerError, err
 	}
 
-	err = stmt.QueryRowContext(ctx, profile.Id).Scan(&existingProfile.Username, &existingProfile.Email)
+	err = stmt.QueryRowContext(ctx, profileID).Scan(&existingProfile.Username, &existingProfile.Email)
 	stmt.Close()
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -202,7 +202,7 @@ func (repository *ProfileRepository) UpdateProfileRepository(profile *request.Pr
 			return helpers.ApiResponse{Message: "Failed to prepare statement"}, http.StatusInternalServerError, err
 		}
 		var tempId int
-		err = stmt.QueryRowContext(ctx, profile.Email, profile.Id).Scan(&tempId)
+		err = stmt.QueryRowContext(ctx, profile.Email, profileID).Scan(&tempId)
 		stmt.Close()
 		if err == nil {
 			repository.logLogrus.WithFields(logrus.Fields{
@@ -242,7 +242,7 @@ func (repository *ProfileRepository) UpdateProfileRepository(profile *request.Pr
 
 		return helpers.ApiResponse{Message: "Failed to prepare statement"}, http.StatusInternalServerError, err
 	}
-	result, err := stmt.ExecContext(ctx, profile.Username, profile.Email, profile.Id)
+	result, err := stmt.ExecContext(ctx, profile.Username, profile.Email, profileID)
 	stmt.Close()
 	if err != nil {
 		repository.logLogrus.WithFields(logrus.Fields{
@@ -273,7 +273,7 @@ func (repository *ProfileRepository) UpdateProfileRepository(profile *request.Pr
 		return helpers.ApiResponse{Message: "No rows affected"}, http.StatusInternalServerError, err
 	}
 
-	repository.logLogrus.Info("Successfully updated profile userID: ", profile.Id)
+	repository.logLogrus.Info("Successfully updated profile userID: ", profileID)
 
 	return helpers.ApiResponse{
 		Message: "Success update profile",

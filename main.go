@@ -9,11 +9,15 @@ import (
 	"net/http"
 )
 
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and your JWT token.
 func main() {
 	docs.SwaggerInfo.Title = "Go Library School API"
 	docs.SwaggerInfo.Description = "This is a school API"
 	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = "localhost:8080"
+	docs.SwaggerInfo.Host = "0.0.0.0:8080"
 	docs.SwaggerInfo.Schemes = []string{"http"}
 
 	db := config.ConnDB()
@@ -27,7 +31,7 @@ func main() {
 
 	middlewares.SetRedisClientMiddleware(rdb)
 
-	err := http.ListenAndServe(":8080", mux)
+	err := http.ListenAndServe("0.0.0.0:8080", mux)
 	if err != nil {
 		log.Fatal(err)
 	}

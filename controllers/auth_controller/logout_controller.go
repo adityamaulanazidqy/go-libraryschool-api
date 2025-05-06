@@ -22,6 +22,16 @@ func NewLogoutController(rdb *redis.Client, logLogrus *logrus.Logger) *LogoutCon
 	}
 }
 
+// Logout godoc
+// @Summary Logout user
+// @Description User Must first log in for used feature Logout
+// @Tags Auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} helpers.ApiResponse
+// @Failure 401 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /logout [post]
 func (controller *LogoutController) Logout(w http.ResponseWriter, r *http.Request) {
 	token, err := middlewares.ExtractTokenFromHeader(r)
 	if err != nil {

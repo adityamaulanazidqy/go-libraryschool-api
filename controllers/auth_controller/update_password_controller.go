@@ -4,8 +4,11 @@ import (
 	context2 "context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"github.com/sirupsen/logrus"
 	"go-libraryschool/helpers"
+	"go-libraryschool/middlewares"
+	"go-libraryschool/models/jwt_models"
 	"go-libraryschool/models/request_models"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -24,6 +27,18 @@ func NewUpdatePasswordController(db *sql.DB, logLogrus *logrus.Logger) *UpdatePa
 	}
 }
 
+// UpdatePassword godoc
+// @Summary UpdatePassword user
+// @Description Used for user which want for update password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body request_models.UpdatePasswordRequest false "Update Password Request"
+// @Success 200 {object} helpers.ApiResponse
+// @Failure 400 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /update-password [put]
 func (controller *UpdatePasswordController) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	var updatePassword request_models.UpdatePasswordRequest
 
@@ -40,7 +55,12 @@ func (controller *UpdatePasswordController) UpdatePassword(w http.ResponseWriter
 		return
 	}
 
-	if updatePassword.UserID <= 0 {
+	claims := r.Context().Value(middlewares.UserContextKey).(*jwt_models.JWTClaims)
+
+	var userID = claims.UserID
+
+	if userID <= 0 {
+		err := errors.New("invalid user ID")
 		controller.logLogrus.WithFields(logrus.Fields{
 			"error":   err,
 			"message": "Invalid user id",
@@ -53,6 +73,7 @@ func (controller *UpdatePasswordController) UpdatePassword(w http.ResponseWriter
 	}
 
 	if updatePassword.Password == "" {
+		err := errors.New("invalid user password")
 		controller.logLogrus.WithFields(logrus.Fields{
 			"error":   err,
 			"message": "Invalid user password",
@@ -95,7 +116,7 @@ func (controller *UpdatePasswordController) UpdatePassword(w http.ResponseWriter
 		return
 	}
 
-	result, err := stmt.ExecContext(ctx, string(hashedPassword), updatePassword.UserID)
+	result, err := stmt.ExecContext(ctx, string(hashedPassword), userID)
 	if err != nil {
 		controller.logLogrus.WithFields(logrus.Fields{
 			"error":   err,

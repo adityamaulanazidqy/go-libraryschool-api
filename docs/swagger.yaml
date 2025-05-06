@@ -31,9 +31,248 @@ definitions:
       token:
         type: string
     type: object
+  request_models.BookBorrowedRequest:
+    properties:
+      book_id:
+        type: integer
+      borrowed_date:
+        type: string
+      return_date:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  request_models.BookByGenreId:
+    properties:
+      genre_id:
+        type: integer
+    type: object
+  request_models.BookById:
+    properties:
+      book_id:
+        type: integer
+    type: object
+  request_models.BookByTitle:
+    properties:
+      title:
+        type: string
+    type: object
+  request_models.BookUpdate:
+    properties:
+      author:
+        type: string
+      book_id:
+        type: integer
+      cover:
+        type: string
+      genre:
+        type: string
+      genre_id:
+        type: integer
+      quantity:
+        type: integer
+      title:
+        type: string
+    type: object
+  request_models.ProfileUpdate:
+    properties:
+      email:
+        type: string
+      username:
+        type: string
+    type: object
+  request_models.UpdatePasswordRequest:
+    properties:
+      password:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
+  /book/book-borrowing-data:
+    get:
+      description: Getting data borrowing books. JWT token is required if you want
+        to use it
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Book Borrowing Data
+      tags:
+      - Books
+  /book/borrowed-book:
+    post:
+      consumes:
+      - application/json
+      description: Borrowed Book. JWT token is required if you want to use it
+      parameters:
+      - description: Data Borrowed
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request_models.BookBorrowedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Borrowed Books
+      tags:
+      - Books
+  /book/category-books:
+    get:
+      consumes:
+      - application/json
+      description: Getting Books By CategoryID. JWT token is required if you want
+        to use it
+      parameters:
+      - description: Category ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request_models.BookByGenreId'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Books Category
+      tags:
+      - Books
+  /book/delete-book:
+    delete:
+      consumes:
+      - application/json
+      description: select one of the data books to update
+      parameters:
+      - description: data update book
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/request_models.BookUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Update data Book
+      tags:
+      - Books
+  /book/get-books:
+    get:
+      description: Getting data book. JWT token is required if you want to use it
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: GetBook
+      tags:
+      - Books
+  /book/search-book:
+    get:
+      consumes:
+      - application/json
+      description: Searching books by title book. JWT token is required if you want
+        to use it
+      parameters:
+      - description: Title Book
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request_models.BookByTitle'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Searching Books
+      tags:
+      - Books
   /login:
     post:
       consumes:
@@ -68,6 +307,87 @@ paths:
       summary: Login user
       tags:
       - Auth
+  /logout:
+    post:
+      description: User Must first log in for used feature Logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - Auth
+  /profile:
+    get:
+      description: view data user example username, email and role.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: GetProfile user
+      tags:
+      - Profile
+  /profile/update-profile:
+    put:
+      consumes:
+      - application/json
+      description: Used for update profile example username or email.
+      parameters:
+      - description: Update Profile
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/request_models.ProfileUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Profile user
+      tags:
+      - Profile
   /register:
     post:
       consumes:
@@ -103,4 +423,41 @@ paths:
       summary: Register user
       tags:
       - Auth
+  /update-password:
+    put:
+      consumes:
+      - application/json
+      description: Used for user which want for update password
+      parameters:
+      - description: Update Password Request
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/request_models.UpdatePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: UpdatePassword user
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and your JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

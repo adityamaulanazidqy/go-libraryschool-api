@@ -29,6 +29,16 @@ func NewProfileController(db *sql.DB, logLogrus *logrus.Logger, rdb *redis.Clien
 	}
 }
 
+// GetProfile godoc
+// @Summary GetProfile user
+// @Description view data user example username, email and role.
+// @Tags Profile
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} helpers.ApiResponse
+// @Failure 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /profile [get]
 func (controller *ProfileController) GetProfile(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middlewares.UserContextKey).(*jwt_models.JWTClaims)
 
@@ -41,6 +51,19 @@ func (controller *ProfileController) GetProfile(w http.ResponseWriter, r *http.R
 	helpers.SendJson(w, code, responseRepo)
 }
 
+// UpdateProfile godoc
+// @Summary Update Profile user
+// @Description Used for update profile example username or email.
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body request_models.ProfileUpdate false "Update Profile"
+// @Success 200 {object} helpers.ApiResponse
+// @Failure 400 {object} helpers.ApiResponse
+// @Failure 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /profile/update-profile [put]
 func (controller *ProfileController) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middlewares.UserContextKey).(*jwt_models.JWTClaims)
 
@@ -59,9 +82,9 @@ func (controller *ProfileController) UpdateProfile(w http.ResponseWriter, r *htt
 		return
 	}
 
-	profile.Id = claims.UserID
+	var profileID = claims.UserID
 
-	responseRepo, code, err := controller.profileRepo.UpdateProfileRepository(&profile)
+	responseRepo, code, err := controller.profileRepo.UpdateProfileRepository(&profile, &profileID)
 	if err != nil {
 		helpers.SendJson(w, code, responseRepo)
 		return

@@ -127,6 +127,15 @@ func (controller *ManagementBookController) AddBook(w http.ResponseWriter, r *ht
 	helpers.SendJson(w, http.StatusOK, responseRepo)
 }
 
+// GetBooks godoc
+// @Summary GetBooks
+// @Description Getting data list books. JWT token is required if you want to use it
+// @Tags Books
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/get-books [get]
 func (controller *ManagementBookController) GetBooks(w http.ResponseWriter, r *http.Request) {
 	responseRepo, code, err := controller.BookEntityRepository().GetBooksRepository()
 	if err != nil {
@@ -145,6 +154,17 @@ func (controller *ManagementBookController) GetBooks(w http.ResponseWriter, r *h
 	helpers.SendJson(w, code, responseRepo)
 }
 
+// GetBook godoc
+// @Summary GetBook
+// @Description Getting data book. JWT token is required if you want to use it
+// @Tags Books
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} helpers.ApiResponse
+// @Success 400 {object} helpers.ApiResponse
+// @Success 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/get-books [get]
 func (controller *ManagementBookController) GetBook(w http.ResponseWriter, r *http.Request) {
 	var book request_models.BookById
 
@@ -155,7 +175,7 @@ func (controller *ManagementBookController) GetBook(w http.ResponseWriter, r *ht
 			"data":  r.Body,
 		}).Error("Failed to parse body")
 
-		helpers.SendJson(w, http.StatusInternalServerError, helpers.ApiResponse{
+		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
 			Message: "Failed to parse body",
 			Data:    nil,
 		})
@@ -171,6 +191,18 @@ func (controller *ManagementBookController) GetBook(w http.ResponseWriter, r *ht
 	helpers.SendJson(w, code, responseRepo)
 }
 
+// DeleteBook godoc
+// @Summary Delete Book
+// @Description select one of the data books to delete
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body request_models.BookById true "bookID"
+// @Success 200 {object} helpers.ApiResponse
+// @Failure 400 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/delete-book [delete]
 func (controller *ManagementBookController) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	var book request_models.BookById
 
@@ -202,6 +234,18 @@ func (controller *ManagementBookController) DeleteBook(w http.ResponseWriter, r 
 	helpers.SendJson(w, code, responseRepo)
 }
 
+// UpdateBook godoc
+// @Summary Update data Book
+// @Description select one of the data books to update
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body request_models.BookUpdate false "data update book"
+// @Success 200 {object} helpers.ApiResponse
+// @Failure 400 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/delete-book [delete]
 func (controller *ManagementBookController) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	var book request_models.BookUpdate
 
@@ -228,6 +272,19 @@ func (controller *ManagementBookController) UpdateBook(w http.ResponseWriter, r 
 	helpers.SendJson(w, code, responseRepo)
 }
 
+// SearchBooks godoc
+// @Summary Searching Books
+// @Description Searching books by title book. JWT token is required if you want to use it
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body request_models.BookByTitle true "Title Book"
+// @Success 200 {object} helpers.ApiResponse
+// @Success 400 {object} helpers.ApiResponse
+// @Success 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/search-book [get]
 func (controller *ManagementBookController) SearchBooks(w http.ResponseWriter, r *http.Request) {
 	var book request_models.BookByTitle
 	err := json.NewDecoder(r.Body).Decode(&book)
@@ -253,6 +310,18 @@ func (controller *ManagementBookController) SearchBooks(w http.ResponseWriter, r
 	helpers.SendJson(w, code, responseRepo)
 }
 
+// BorrowedBook godoc
+// @Summary Borrowed Books
+// @Description Borrowed Book. JWT token is required if you want to use it
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body request_models.BookBorrowedRequest true "Data Borrowed"
+// @Success 200 {object} helpers.ApiResponse
+// @Success 400 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/borrowed-book [post]
 func (controller *ManagementBookController) BorrowedBook(w http.ResponseWriter, r *http.Request) {
 	var book request_models.BookBorrowedRequest
 
@@ -279,6 +348,15 @@ func (controller *ManagementBookController) BorrowedBook(w http.ResponseWriter, 
 	helpers.SendJson(w, code, responseRepo)
 }
 
+// BookBorrowingData godoc
+// @Summary Book Borrowing Data
+// @Description Getting data borrowing books. JWT token is required if you want to use it
+// @Tags Books
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/book-borrowing-data [get]
 func (controller *ManagementBookController) BookBorrowingData(w http.ResponseWriter, r *http.Request) {
 	responseRepo, code, err := controller.BookEntityRepository().BookBorrowingDataRepository()
 	if err != nil {
@@ -289,6 +367,19 @@ func (controller *ManagementBookController) BookBorrowingData(w http.ResponseWri
 	helpers.SendJson(w, code, responseRepo)
 }
 
+// GetBooksCategory godoc
+// @Summary Get Books Category
+// @Description Getting Books By CategoryID. JWT token is required if you want to use it
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body request_models.BookByGenreId true "Category ID"
+// @Success 200 {object} helpers.ApiResponse
+// @Success 400 {object} helpers.ApiResponse
+// @Success 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/category-books [get]
 func (controller *ManagementBookController) GetBooksCategory(w http.ResponseWriter, r *http.Request) {
 	var books request_models.BookByGenreId
 
