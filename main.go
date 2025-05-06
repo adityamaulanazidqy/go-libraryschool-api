@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-libraryschool/config"
+	"go-libraryschool/controllers/otp_email_controller"
 	"go-libraryschool/docs"
 	"go-libraryschool/middlewares"
 	"go-libraryschool/routes"
@@ -17,7 +18,7 @@ func main() {
 	docs.SwaggerInfo.Title = "Go Library School API"
 	docs.SwaggerInfo.Description = "This is a school API"
 	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = "0.0.0.0:8080"
+	docs.SwaggerInfo.Host = "localhost:8080"
 	docs.SwaggerInfo.Schemes = []string{"http"}
 
 	db := config.ConnDB()
@@ -31,7 +32,9 @@ func main() {
 
 	middlewares.SetRedisClientMiddleware(rdb)
 
-	err := http.ListenAndServe("0.0.0.0:8080", mux)
+	otp_email_controller.SetOtpEmail()
+
+	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
 		log.Fatal(err)
 	}

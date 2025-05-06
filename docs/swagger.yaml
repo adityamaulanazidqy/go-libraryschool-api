@@ -81,10 +81,27 @@ definitions:
       username:
         type: string
     type: object
+  request_models.RequestOtpEmail:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
   request_models.UpdatePasswordRequest:
     properties:
       password:
         type: string
+    type: object
+  request_models.VerificationOtpEmail:
+    properties:
+      email:
+        type: string
+      otp:
+        type: string
+    required:
+    - email
+    - otp
     type: object
 info:
   contact: {}
@@ -330,6 +347,74 @@ paths:
       summary: Logout user
       tags:
       - Auth
+  /otp/send-otp:
+    post:
+      consumes:
+      - application/json
+      description: Send otp to email
+      parameters:
+      - description: User Email
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request_models.RequestOtpEmail'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      summary: Otp Email
+      tags:
+      - Otp
+  /otp/verify-otp:
+    post:
+      consumes:
+      - application/json
+      description: Verify otp email
+      parameters:
+      - description: User Email and Otp
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request_models.VerificationOtpEmail'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      summary: Verify Otp
+      tags:
+      - Otp
   /profile:
     get:
       description: view data user example username, email and role.

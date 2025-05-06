@@ -33,7 +33,7 @@ func NewRegisterController(db *sql.DB) *RegisterController {
 // @Failure 401 {object} helpers.ApiResponse
 // @Failure 500 {object} helpers.ApiResponse
 // @Router /register [post]
-func (RC RegisterController) Register(w http.ResponseWriter, r *http.Request) {
+func (RC *RegisterController) Register(w http.ResponseWriter, r *http.Request) {
 	var user auth_models.RegisterRequest
 
 	err := json.NewDecoder(r.Body).Decode(&user)

@@ -9,6 +9,7 @@ import (
 	"go-libraryschool/middlewares"
 	AuthRoutes "go-libraryschool/routes/auth_routes"
 	ManagementBookRoutes "go-libraryschool/routes/management_book_routes"
+	OtpRoutes "go-libraryschool/routes/otp_email_routes"
 	ProfileRoutes "go-libraryschool/routes/profile_routes"
 	"net/http"
 )
@@ -18,6 +19,8 @@ func Router(mux *http.ServeMux, db *sql.DB, logLogrus *logrus.Logger, rdb *redis
 	AuthRoutes.RegisterRoute(mux, db)
 	AuthRoutes.LogoutRoute(mux, rdb, logLogrus)
 	AuthRoutes.UpdatePasswordRoute(mux, db, logLogrus)
+
+	OtpRoutes.OtpEmailRoute(mux, db, logLogrus, rdb)
 
 	mux.Handle("/user/profile", middlewares.JWTMiddleware("Student", "Manager", "Librarian")(http.HandlerFunc(controllers.GetProfile)))
 

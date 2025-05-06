@@ -2,7 +2,9 @@ package config
 
 import (
 	"database/sql"
+	"github.com/joho/godotenv"
 	"log"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -10,7 +12,12 @@ import (
 var logger *log.Logger
 
 func ConnDB() *sql.DB {
-	dsn := "root:@tcp(127.0.0.1:3306)/go_libraryschool"
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	dsn := os.Getenv("MYSQL_USERNAME") + ":" + os.Getenv("MYSQL_PASSWORD") + "@tcp(" + os.Getenv("MYSQL_HOST") + ":" + os.Getenv("MYSQL_PORT") + ")/" + os.Getenv("MYSQL_DATABASE")
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		logger.Fatalf("Error connecting to database: %v", err)
