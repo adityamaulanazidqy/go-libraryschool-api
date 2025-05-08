@@ -32,13 +32,17 @@ func JWTMiddleware(allowedRoles ...string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				http.Error(w, "Missing token", http.StatusUnauthorized)
+				helpers.SendJson(w, http.StatusUnauthorized, helpers.ApiResponse{
+					Message: "Missing token",
+				})
 				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				http.Error(w, "Invalid token format", http.StatusUnauthorized)
+				helpers.SendJson(w, http.StatusUnauthorized, helpers.ApiResponse{
+					Message: "Invalid token format",
+				})
 				return
 			}
 
@@ -49,7 +53,9 @@ func JWTMiddleware(allowedRoles ...string) func(http.Handler) http.Handler {
 				return jwtKey, nil
 			})
 			if err != nil || !token.Valid {
-				http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+				helpers.SendJson(w, http.StatusUnauthorized, helpers.ApiResponse{
+					Message: "Invalid or expired token",
+				})
 				return
 			}
 
@@ -72,8 +78,11 @@ func JWTMiddleware(allowedRoles ...string) func(http.Handler) http.Handler {
 						break
 					}
 				}
+
 				if !roleMatch {
-					http.Error(w, "Forbidden", http.StatusForbidden)
+					helpers.SendJson(w, http.StatusForbidden, helpers.ApiResponse{
+						Message: "Forbidden",
+					})
 					return
 				}
 			}

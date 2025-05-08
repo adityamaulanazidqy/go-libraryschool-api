@@ -6,7 +6,9 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"go-libraryschool/helpers"
+	"go-libraryschool/middlewares"
 	"go-libraryschool/models/identity"
+	"go-libraryschool/models/jwt_models"
 	"go-libraryschool/models/request_models"
 	"go-libraryschool/repository/management_book_repository"
 	"net/http"
@@ -397,6 +399,106 @@ func (controller *ManagementBookController) GetBooksCategory(w http.ResponseWrit
 	}
 
 	responseRepo, code, err := controller.BookEntityRepository().GetBooksGenreRepository(books.GenreID)
+	if err != nil {
+		helpers.SendJson(w, code, responseRepo)
+		return
+	}
+
+	helpers.SendJson(w, code, responseRepo)
+}
+
+// AddFavoriteBook godoc
+// @Summary Add Favorite Book
+// @Description Added Favorite book. JWT token is required if you want to use it
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body request_models.FavoriteBookRequest true "Data ID User and Book"
+// @Success 200 {object} helpers.ApiResponse
+// @Success 400 {object} helpers.ApiResponse
+// @Success 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/add-favorite-book [post]
+func (controller *ManagementBookController) AddFavoriteBook(w http.ResponseWriter, r *http.Request) {
+	var book request_models.FavoriteBookRequest
+
+	err := json.NewDecoder(r.Body).Decode(&book)
+	if err != nil {
+		controller.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to parse body",
+		}).Error("Failed to parse body")
+
+		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
+			Message: "Failed to parse body",
+			Data:    nil,
+		})
+		return
+	}
+
+	responseRepo, code, err := controller.bookRepo.AddFavoriteBookRepository(book.UserID, book.BookID)
+	if err != nil {
+		helpers.SendJson(w, code, responseRepo)
+		return
+	}
+
+	helpers.SendJson(w, code, responseRepo)
+}
+
+// DeleteFavoriteBook godoc
+// @Summary Delete Favorite Book
+// @Description Used to select one favorite book to delete. JWT token is required if you want to use it
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body request_models.FavoriteBookRequest true "Data ID User and Book"
+// @Success 200 {object} helpers.ApiResponse
+// @Success 400 {object} helpers.ApiResponse
+// @Success 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/delete-favorite-book [delete]
+func (controller *ManagementBookController) DeleteFavoriteBook(w http.ResponseWriter, r *http.Request) {
+	var book request_models.FavoriteBookRequest
+
+	err := json.NewDecoder(r.Body).Decode(&book)
+	if err != nil {
+		controller.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to parse body",
+		}).Error("Failed to parse body")
+
+		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
+			Message: "Failed to parse body",
+			Data:    nil,
+		})
+		return
+	}
+
+	responseRepo, code, err := controller.bookRepo.DeleteFavoriteBookRepository(book.UserID, book.BookID)
+	if err != nil {
+		helpers.SendJson(w, code, responseRepo)
+		return
+	}
+
+	helpers.SendJson(w, code, responseRepo)
+}
+
+// GetFavoriteBooks godoc
+// @Summary Get Favorite Books
+// @Description Getting Data favorite books. JWT token is required if you want to use it
+// @Tags Books
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} helpers.ApiResponse
+// @Success 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/get-favorite-book [get]
+func (controller *ManagementBookController) GetFavoriteBooks(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value(middlewares.UserContextKey).(*jwt_models.JWTClaims)
+
+	responseRepo, code, err := controller.bookRepo.GetFavoriteBooksRepository(claims.UserID)
 	if err != nil {
 		helpers.SendJson(w, code, responseRepo)
 		return

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"go-libraryschool/helpers"
@@ -753,4 +754,418 @@ func (repository *ManagementBookRepository) GetBooksGenreRepository(genreID int)
 	}
 
 	return helpers.ApiResponse{Message: "Success", Data: books}, http.StatusOK, nil
+}
+
+func (repository *ManagementBookRepository) AddFavoriteBookRepository(userID, bookID int) (helpers.ApiResponse, int, error) {
+	var (
+		user         identity.UserFavoriteBook
+		book         identity.Book
+		favoriteBook identity.FavoriteBook
+	)
+
+	ctx, cancel := context2.WithTimeout(context2.Background(), 4*time.Second)
+	defer cancel()
+
+	query := "SELECT username, email, roleID FROM users WHERE id = ?"
+	stmt, err := repository.db.PrepareContext(ctx, query)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to prepare statement",
+		}).Error("Failed to prepare statement")
+
+		return helpers.ApiResponse{Message: "Failed to prepare statement", Data: nil}, http.StatusInternalServerError, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(ctx, userID).Scan(&user.Username, &user.Email, &user.RoleID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "User does not exist",
+			}).Error("User does not exist")
+
+			return helpers.ApiResponse{Message: "User does not exist", Data: nil}, http.StatusNotFound, nil
+		}
+
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to execute query",
+		}).Error("Failed to execute query")
+
+		return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	queryRole := "SELECT role FROM roles WHERE id = ?"
+	stmt, err = repository.db.PrepareContext(ctx, queryRole)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to prepare statement",
+		}).Error("Failed to prepare statement")
+
+		return helpers.ApiResponse{Message: "Failed to prepare statement", Data: nil}, http.StatusInternalServerError, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(ctx, user.RoleID).Scan(&user.Role)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "Role does not exist",
+			}).Error("Role does not exist")
+
+			return helpers.ApiResponse{Message: "Role does not exist", Data: nil}, http.StatusNotFound, nil
+		}
+
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to execute query",
+		}).Error("Failed to execute query")
+
+		return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	queryBook := "SELECT book_id, title, author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE book_id = ?"
+	stmt, err = repository.db.PrepareContext(ctx, queryBook)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to prepare statement",
+		}).Error("Failed to prepare statement")
+
+		return helpers.ApiResponse{Message: "Failed to prepare statement", Data: nil}, http.StatusInternalServerError, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(ctx, bookID).Scan(&book.BookID, &book.Title, &book.Author, &book.Cover, &book.GenreID, &book.Isbn, &book.PublicationYear, &book.Quantity)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "Book does not exist",
+			}).Error("Book does not exist")
+
+			return helpers.ApiResponse{Message: "Book does not exist", Data: nil}, http.StatusNotFound, nil
+		}
+
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to execute query",
+		}).Error("Failed to execute query")
+
+		return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	queryGenre := "SELECT genre_name FROM genres WHERE genre_id = ?"
+	stmt, err = repository.db.PrepareContext(ctx, queryGenre)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to prepare statement",
+		}).Error("Failed to prepare statement")
+
+		return helpers.ApiResponse{Message: "Failed to prepare statement", Data: nil}, http.StatusInternalServerError, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(ctx, book.GenreID).Scan(&book.Genre)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "Genre does not exist",
+			}).Error("Genre does not exist")
+
+			return helpers.ApiResponse{Message: "Genre does not exist", Data: nil}, http.StatusNotFound, nil
+		}
+
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to execute query",
+		}).Error("Failed to execute query")
+
+		return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	queryAddFavoriteBook := "INSERT INTO favorite_books (user_id, book_id) VALUES (?, ?)"
+	stmt, err = repository.db.PrepareContext(ctx, queryAddFavoriteBook)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to prepare statement",
+		}).Error("Failed to prepare statement")
+
+		return helpers.ApiResponse{Message: "Failed to prepare statement", Data: nil}, http.StatusInternalServerError, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.ExecContext(ctx, userID, bookID)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to execute query",
+		}).Error("Failed to execute query")
+
+		return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to get rows affected",
+		})
+
+		return helpers.ApiResponse{Message: "Failed to get rows affected", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	repository.logLogrus.Infof("Success Added Favorite Book Repository. rows affected: %d", rowsAffected)
+
+	favoriteBook = identity.FavoriteBook{
+		User: user,
+		Book: book,
+	}
+
+	return helpers.ApiResponse{Message: "Success added favorite book", Data: favoriteBook}, http.StatusOK, nil
+}
+
+func (repository *ManagementBookRepository) GetFavoriteBooksRepository(userID int) (helpers.ApiResponse, int, error) {
+	ctx, cancel := context2.WithTimeout(context2.Background(), 4*time.Second)
+	defer cancel()
+
+	favoriteBooksRedis, err := repository.rdb.Get(ctx, fmt.Sprintf("favorite_books: %d", userID)).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			responseRepo, code, err := repository.GetFavoriteBooksDBMysql(userID)
+			return responseRepo, code, err
+		}
+
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to get data in redis",
+		}).Error("Failed to get data in redis")
+
+		return helpers.ApiResponse{Message: "Failed to get data in redis", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	var favoriteBooks []identity.Book
+	err = json.Unmarshal([]byte(favoriteBooksRedis), &favoriteBooks)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to unmarshal data redis",
+		}).Error("Failed to unmarshal data redis")
+
+		return helpers.ApiResponse{Message: "Failed to unmarshal data redis", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	return helpers.ApiResponse{Message: "Success get data in redis", Data: favoriteBooks}, http.StatusOK, nil
+}
+
+func (repository *ManagementBookRepository) GetFavoriteBooksDBMysql(userID int) (helpers.ApiResponse, int, error) {
+	ctx, cancel := context2.WithTimeout(context2.Background(), 4*time.Second)
+	defer cancel()
+
+	queryFavorite := "SELECT book_id FROM favorite_books WHERE user_id = ?"
+	stmt, err := repository.db.PrepareContext(ctx, queryFavorite)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to prepare statement",
+		}).Error("Failed to prepare statement")
+
+		return helpers.ApiResponse{Message: "Failed to prepare statement", Data: nil}, http.StatusInternalServerError, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, userID)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to execute query",
+		}).Error("Failed to execute query")
+
+		return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
+	}
+	defer rows.Close()
+
+	var books []identity.Book
+
+	for rows.Next() {
+		var book identity.Book
+		err = rows.Scan(&book.BookID)
+		if err != nil {
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "Failed to scan rows",
+			}).Error("Failed to scan rows")
+
+			return helpers.ApiResponse{Message: "Failed to scan rows", Data: nil}, http.StatusInternalServerError, err
+		}
+
+		queryBooks := "SELECT title, author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE book_id = ?"
+		err = repository.db.QueryRowContext(ctx, queryBooks, book.BookID).Scan(&book.Title, &book.Author, &book.Cover, &book.GenreID, &book.Isbn, &book.PublicationYear, &book.Quantity)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				repository.logLogrus.WithFields(logrus.Fields{
+					"error":   err,
+					"message": "Book does not exist",
+				}).Error("Book does not exist")
+
+				return helpers.ApiResponse{Message: "Book does not exist", Data: nil}, http.StatusNotFound, nil
+			}
+
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "Failed to execute query",
+			}).Error("Failed to execute query")
+
+			return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
+		}
+
+		queryGenre := "SELECT genre_name FROM genres WHERE genre_id = ?"
+		err = repository.db.QueryRowContext(ctx, queryGenre, book.GenreID).Scan(&book.Genre)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				repository.logLogrus.WithFields(logrus.Fields{
+					"error":   err,
+					"message": "Genre does not exist",
+				}).Error("Genre does not exist")
+
+				return helpers.ApiResponse{Message: "Genre does not exist", Data: nil}, http.StatusNotFound, nil
+			}
+
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "Failed to execute query",
+			}).Error("Failed to execute query")
+
+			return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
+		}
+
+		books = append(books, book)
+	}
+
+	booksJson, err := json.Marshal(books)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to marshal books",
+		}).Error("Failed to marshal books")
+
+		return helpers.ApiResponse{Message: "Failed to marshal books", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	err = repository.rdb.Set(ctx, fmt.Sprintf("favorite_books: %d", userID), booksJson, 30*time.Second).Err()
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to set favorite books",
+		}).Error("Failed to set favorite books")
+
+		return helpers.ApiResponse{Message: "Failed to set favorite books", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	return helpers.ApiResponse{Message: "Success get data favorite books", Data: books}, http.StatusOK, nil
+}
+
+func (repository *ManagementBookRepository) DeleteFavoriteBookRepository(userID, bookID int) (helpers.ApiResponse, int, error) {
+	var bookName string
+
+	ctx, cancel := context2.WithTimeout(context2.Background(), 4*time.Second)
+	defer cancel()
+
+	queryBook := "SELECT title FROM books WHERE book_id = ?"
+	stmt, err := repository.db.PrepareContext(ctx, queryBook)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to prepare statement",
+		}).Error("Failed to prepare statement")
+
+		return helpers.ApiResponse{Message: "Failed to prepare statement", Data: nil}, http.StatusInternalServerError, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(ctx, bookID).Scan(&bookName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "Book does not exist",
+			}).Error("Book does not exist")
+
+			return helpers.ApiResponse{Message: "Book does not exist", Data: nil}, http.StatusNotFound, nil
+		}
+
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to execute query",
+		}).Error("Failed to execute query")
+
+		return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	query := "DELETE FROM favorite_books WHERE book_id = ? AND user_id = ?"
+	stmt, err = repository.db.PrepareContext(ctx, query)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to prepare statement",
+		}).Error("Failed to prepare statement")
+
+		return helpers.ApiResponse{Message: "Failed to prepare statement", Data: nil}, http.StatusInternalServerError, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.ExecContext(ctx, bookID, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "Favorite book does not exist",
+			}).Error("Favorite book does not exist")
+
+			return helpers.ApiResponse{Message: "Favorite book does not exist", Data: nil}, http.StatusNotFound, nil
+		}
+
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to delete favorite books",
+		}).Error("Failed to delete favorite books")
+
+		return helpers.ApiResponse{Message: "Failed to delete favorite books", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to get rows affected",
+		}).Error("Failed to get rows affected")
+
+		return helpers.ApiResponse{Message: "Failed to get rows affected", Data: nil}, http.StatusInternalServerError, err
+	}
+
+	if rowsAffected == 0 {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Rows affected zero",
+		}).Error("Rows affected zero")
+
+		return helpers.ApiResponse{Message: "Rows affected zero", Data: nil}, http.StatusInternalServerError, nil
+	}
+
+	repository.logLogrus.Infof("Success delected, rows affected: %d", rowsAffected)
+
+	var data = struct {
+		BookName string `json:"book_name"`
+	}{
+		BookName: bookName,
+	}
+
+	return helpers.ApiResponse{Message: "Success delete favorite books", Data: data}, http.StatusOK, nil
 }

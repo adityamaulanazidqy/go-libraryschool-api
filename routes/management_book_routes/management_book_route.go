@@ -31,7 +31,10 @@ func ManagementBookRoute(mux *http.ServeMux, db *sql.DB, logLogrus *logrus.Logge
 	registerRoute("/book/search-book", http.MethodGet, []string{"Manager", "Librarian", "Student"}, controller.SearchBooks)
 	registerRoute("/book/delete-book", http.MethodDelete, []string{"Manager", "Librarian"}, controller.DeleteBook)
 	registerRoute("/book/update-book", http.MethodPut, []string{"Manager"}, controller.UpdateBook)
-	registerRoute("/book/borrowed-book", http.MethodPost, []string{"Student"}, controller.BorrowedBook)
+	registerRoute("/book/borrowed-book", http.MethodPost, []string{"Manager", "Student"}, controller.BorrowedBook)
 	registerRoute("/book/book-borrowing-data", http.MethodGet, []string{"Manager", "Librarian"}, controller.BookBorrowingData)
 	registerRoute("/book/category-books", http.MethodGet, []string{"Manager", "Librarian", "Student"}, controller.GetBooksCategory)
+	registerRoute("/book/add-favorite-book", http.MethodPost, []string{"Librarian", "Student"}, controller.AddFavoriteBook)
+	registerRoute("/book/delete-favorite-book", http.MethodDelete, []string{"Librarian", "Student"}, controller.DeleteFavoriteBook)
+	registerRoute("/book/get-favorite-book", http.MethodGet, []string{"Librarian", "Student"}, controller.GetFavoriteBooks)
 }

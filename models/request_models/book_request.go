@@ -12,6 +12,11 @@ type BookByTitle struct {
 	Title string `json:"title"`
 }
 
+type FavoriteBookRequest struct {
+	UserID int `json:"user_id"`
+	BookID int `json:"book_id"`
+}
+
 type BookUpdate struct {
 	BookID   int    `json:"book_id"`
 	Title    string `json:"title,omitempty"`

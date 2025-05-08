@@ -74,6 +74,13 @@ definitions:
       title:
         type: string
     type: object
+  request_models.FavoriteBookRequest:
+    properties:
+      book_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
   request_models.ProfileUpdate:
     properties:
       email:
@@ -106,6 +113,42 @@ definitions:
 info:
   contact: {}
 paths:
+  /book/add-favorite-book:
+    post:
+      consumes:
+      - application/json
+      description: Added Favorite book. JWT token is required if you want to use it
+      parameters:
+      - description: Data ID User and Book
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request_models.FavoriteBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Add Favorite Book
+      tags:
+      - Books
   /book/book-borrowing-data:
     get:
       description: Getting data borrowing books. JWT token is required if you want
@@ -226,6 +269,43 @@ paths:
       summary: Update data Book
       tags:
       - Books
+  /book/delete-favorite-book:
+    delete:
+      consumes:
+      - application/json
+      description: Used to select one favorite book to delete. JWT token is required
+        if you want to use it
+      parameters:
+      - description: Data ID User and Book
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request_models.FavoriteBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Favorite Book
+      tags:
+      - Books
   /book/get-books:
     get:
       description: Getting data book. JWT token is required if you want to use it
@@ -251,6 +331,30 @@ paths:
       security:
       - BearerAuth: []
       summary: GetBook
+      tags:
+      - Books
+  /book/get-favorite-book:
+    get:
+      description: Getting Data favorite books. JWT token is required if you want
+        to use it
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Favorite Books
       tags:
       - Books
   /book/search-book:
