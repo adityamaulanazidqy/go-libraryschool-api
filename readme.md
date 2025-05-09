@@ -30,7 +30,7 @@ http://localhost:8080/swagger/index.html
 | Framework      | Native     |
 | Database       | MySQL 8.0  |
 | Cache          | Redis 7    |
-| Authentication | Gomail     |
+| Auth Email.    | Gomail     |
 | Documentation  | Swagger    |
 | Logging        | Logrus     |
 | Authentication  | JWT Token      |
