@@ -16,7 +16,7 @@ import (
 
 func Router(mux *http.ServeMux, db *sql.DB, logLogrus *logrus.Logger, rdb *redis.Client) *http.ServeMux {
 	AuthRoutes.LoginRoute(mux, db)
-	AuthRoutes.RegisterRoute(mux, db)
+	AuthRoutes.RegisterRoute(mux, db, logLogrus)
 	AuthRoutes.LogoutRoute(mux, rdb, logLogrus)
 	AuthRoutes.UpdatePasswordRoute(mux, db, logLogrus)
 
