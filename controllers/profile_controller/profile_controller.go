@@ -92,3 +92,68 @@ func (controller *ProfileController) UpdateProfile(w http.ResponseWriter, r *htt
 
 	helpers.SendJson(w, code, responseRepo)
 }
+
+// UpdatePhotoProfile godoc
+// @Summary Update Photo Profile User
+// @Description Used for update photo profile.
+// @Tags Profile
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param photo formData file true "Photo profile"
+// @Success 200 {object} helpers.ApiResponse
+// @Failure 400 {object} helpers.ApiResponse
+// @Failure 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /profile/photo-profile [put]
+func (controller *ProfileController) UpdatePhotoProfile(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value(middlewares.UserContextKey).(*jwt_models.JWTClaims)
+
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		controller.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to parse multipart form",
+		}).Error("Failed to parse multipart form")
+
+		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
+			Message: "Failed to parse multipart form",
+		})
+		return
+	}
+
+	file, handler, err := r.FormFile("profile")
+	if err != nil {
+		controller.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to get profile image",
+		}).Error("Failed to get profile image")
+
+		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
+			Message: "Failed to get profile image",
+		})
+		return
+	}
+	defer file.Close()
+
+	filename, err := helpers.SaveImages().Profile(file, handler, "_")
+	if err != nil {
+		controller.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to save profile image",
+		}).Error("Failed to save profile image")
+
+		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
+			Message: "Failed to save profile image",
+		})
+		return
+	}
+
+	responseRepo, code, err := controller.profileRepo.UpdatePhotoProfile(claims.UserID, filename)
+	if err != nil {
+		helpers.SendJson(w, code, responseRepo)
+		return
+	}
+
+	helpers.SendJson(w, code, responseRepo)
+}

@@ -113,6 +113,71 @@ definitions:
 info:
   contact: {}
 paths:
+  /book/add-book:
+    post:
+      consumes:
+      - multipart/form-data
+      description: used by librarians to add books
+      parameters:
+      - description: Title Book
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Author Book
+        in: formData
+        name: author
+        required: true
+        type: string
+      - description: Isbn Book
+        in: formData
+        name: isbn
+        required: true
+        type: string
+      - description: Cover Book
+        in: formData
+        name: cover
+        required: true
+        type: file
+      - description: Genre ID
+        in: formData
+        name: genreID
+        required: true
+        type: integer
+      - description: Publication Year
+        in: formData
+        name: publicationYear
+        required: true
+        type: integer
+      - description: Quantity
+        in: formData
+        name: quantity
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Add Book
+      tags:
+      - Books
   /book/add-favorite-book:
     post:
       consumes:
@@ -540,6 +605,41 @@ paths:
       security:
       - BearerAuth: []
       summary: GetProfile user
+      tags:
+      - Profile
+  /profile/photo-profile:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Used for update photo profile.
+      parameters:
+      - description: Photo profile
+        in: formData
+        name: photo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/helpers.ApiResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Photo Profile User
       tags:
       - Profile
   /profile/update-profile:

@@ -27,4 +27,5 @@ func ProfileRoute(mux *http.ServeMux, db *sql.DB, logLogrus *logrus.Logger, rdb 
 
 	registerRoute("/profile", http.MethodGet, []string{"Manager", "Librarian", "Student"}, controller.GetProfile)
 	registerRoute("/profile/update-profile", http.MethodPut, []string{"Manager", "Librarian", "Student"}, controller.UpdateProfile)
+	registerRoute("/profile/photo-profile", http.MethodPut, []string{"Manager", "Librarian", "Student"}, controller.UpdatePhotoProfile)
 }

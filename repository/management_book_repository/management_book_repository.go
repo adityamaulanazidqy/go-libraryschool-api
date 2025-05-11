@@ -93,6 +93,15 @@ func (repository *ManagementBookRepository) AddBookRepository(r *http.Request, b
 
 	err = stmt.QueryRowContext(ctx, book.GenreID).Scan(&book.Genre)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "No genre book found",
+			}).Error("No genre book found")
+
+			return helpers.ApiResponse{Message: "Genre Book not found!"}, http.StatusNotFound, err
+		}
+
 		repository.logLogrus.WithFields(logrus.Fields{
 			"error":   err,
 			"message": "Failed to execute statement",

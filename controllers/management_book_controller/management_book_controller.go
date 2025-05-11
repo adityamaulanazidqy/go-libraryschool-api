@@ -30,6 +30,25 @@ func (controller *ManagementBookController) BookEntityRepository() *management_b
 	return controller.bookRepo
 }
 
+// AddBook godoc
+// @Summary Add Book
+// @Description used by librarians to add books
+// @Tags Books
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param title formData string true "Title Book"
+// @Param author formData string true "Author Book"
+// @Param isbn formData string true "Isbn Book"
+// @Param cover formData file true "Cover Book"
+// @Param genreID formData int true "Genre ID"
+// @Param publicationYear formData int true "Publication Year"
+// @Param quantity formData int true "Quantity"
+// @Success 201 {object} helpers.ApiResponse
+// @Failure 400 {object} helpers.ApiResponse
+// @Failure 404 {object} helpers.ApiResponse
+// @Failure 500 {object} helpers.ApiResponse
+// @Router /book/add-book [post]
 func (controller *ManagementBookController) AddBook(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {

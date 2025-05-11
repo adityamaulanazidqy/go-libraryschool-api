@@ -3,6 +3,7 @@ package auth_controller
 import (
 	context2 "context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"github.com/sirupsen/logrus"
 	"go-libraryschool/helpers"
@@ -26,7 +27,7 @@ func NewRegisterController(db *sql.DB, logLogrus *logrus.Logger) *RegisterContro
 // @Summary Register user
 // @Description Register with username, email, password (only email gmail make used)
 // @Tags Auth
-// @Accept multipart/form-data
+// @Accept json
 // @Produce json
 // @Param request body auth_models.RegisterRequest true "Register Request"
 // @Success 201 {object} helpers.ApiResponse
@@ -35,55 +36,23 @@ func NewRegisterController(db *sql.DB, logLogrus *logrus.Logger) *RegisterContro
 // @Failure 500 {object} helpers.ApiResponse
 // @Router /register [post]
 func (RC *RegisterController) Register(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(10 << 20)
-	if err != nil {
-		RC.logLogrus.WithFields(logrus.Fields{
-			"error":   err,
-			"message": "Failed to parse multipart form",
-		}).Error("Failed to parse multipart form")
+	var req auth_models.RegisterRequest
 
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
 		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
-			Message: "Failed to parse multipart form",
+			Message: "Invalid request",
 		})
 		return
 	}
 
-	file, handler, err := r.FormFile("profile")
-	if err != nil {
-		RC.logLogrus.WithFields(logrus.Fields{
-			"error":   err,
-			"message": "Failed to get profile image",
-		}).Error("Failed to get profile image")
-
-		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
-			Message: "Failed to get profile image",
-		})
-		return
-	}
-	defer file.Close()
-
-	filename, err := helpers.SaveImages().Profile(file, handler, "_")
-	if err != nil {
-		RC.logLogrus.WithFields(logrus.Fields{
-			"error":   err,
-			"message": "Failed to save profile image",
-		}).Error("Failed to save profile image")
-
-		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
-			Message: "Failed to save profile image",
-		})
-		return
-	}
-
-	username := r.FormValue("username")
-	if username == "" {
+	if req.Username == "" {
 		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
 			Message: "Username is required",
 		})
 	}
 
-	email := r.FormValue("email")
-	if !strings.HasSuffix(email, "@gmail.com") && !strings.Contains(email, "@") {
+	if !strings.HasSuffix(req.Email, "@gmail.com") && !strings.Contains(req.Email, "@") {
 		http.Error(w, "Please input your email with google account.", http.StatusBadRequest)
 		return
 	}
@@ -94,7 +63,7 @@ func (RC *RegisterController) Register(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT email FROM users WHERE email = ?"
 
 	var tmpEmail string
-	err = RC.Db.QueryRowContext(ctx, query, email).Scan(&tmpEmail)
+	err = RC.Db.QueryRowContext(ctx, query, req.Email).Scan(&tmpEmail)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		helpers.SendJson(w, http.StatusInternalServerError, helpers.ApiResponse{
@@ -110,22 +79,21 @@ func (RC *RegisterController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	password := r.FormValue("password")
-	if password == "" {
+	if req.Password == "" {
 		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
 			Message: "Please input your password!",
 		})
 		return
 	}
 
-	if len(password) < 6 {
+	if len(req.Password) < 6 {
 		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
 			Message: "Password must be at least 6 characters!",
 		})
 		return
 	}
 
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		helpers.SendJson(w, http.StatusInternalServerError, helpers.ApiResponse{
 			Message: "Something went wrong",
@@ -136,10 +104,21 @@ func (RC *RegisterController) Register(w http.ResponseWriter, r *http.Request) {
 
 	var roleID = 3
 
-	queryInsert := "INSERT INTO users (username, email, password, profile, roleID, created_at) VALUES (?, ?, ?, ?, ?, ?)"
-	_, err = RC.Db.ExecContext(ctx, queryInsert, username, email, hashPassword, filename, roleID, time.Now())
+	queryInsert := "INSERT INTO users (username, email, password, roleID, created_at) VALUES (?, ?, ?, ?, ?)"
+	stmt, err := RC.Db.PrepareContext(ctx, queryInsert)
 	if err != nil {
-		http.Error(w, "Failed to insert data users!", http.StatusInternalServerError)
+		helpers.SendJson(w, http.StatusInternalServerError, helpers.ApiResponse{
+			Message: "Something went wrong",
+		})
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, req.Username, req.Email, hashPassword, roleID, time.Now())
+	if err != nil {
+		helpers.SendJson(w, http.StatusInternalServerError, helpers.ApiResponse{
+			Message: "Something went wrong",
+		})
 		return
 	}
 
@@ -161,8 +140,8 @@ func (RC *RegisterController) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := auth_models.RegisterResponse{
-		Username: username,
-		Email:    email,
+		Username: req.Username,
+		Email:    req.Email,
 		Role:     role,
 	}
 

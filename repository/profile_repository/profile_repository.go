@@ -280,3 +280,77 @@ func (repository *ProfileRepository) UpdateProfileRepository(profile *request.Pr
 		Data:    profile,
 	}, http.StatusOK, nil
 }
+
+func (repository *ProfileRepository) UpdatePhotoProfile(userID int, filename string) (helpers.ApiResponse, int, error) {
+	ctx, cancel := context2.WithTimeout(context2.Background(), time.Second*4)
+	defer cancel()
+
+	query := "UPDATE users SET profile = ? WHERE id = ?"
+	stmt, err := repository.Db.PrepareContext(ctx, query)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to prepare statement",
+		}).Error("Failed to prepare statement")
+
+		return helpers.ApiResponse{Message: "Failed to prepare statement"}, http.StatusInternalServerError, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.ExecContext(ctx, filename, userID)
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to execute statement",
+		}).Error("Failed to execute statement")
+
+		return helpers.ApiResponse{Message: "Failed to execute statement"}, http.StatusInternalServerError, err
+	}
+
+	rowAffected, err := result.RowsAffected()
+	if err != nil {
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to get rows affected",
+		}).Error("Failed to get rows affected")
+
+		return helpers.ApiResponse{Message: "Failed to get rows affected"}, http.StatusInternalServerError, err
+	}
+
+	repository.logLogrus.Infof("Successfully updated profile, rows effect: %d", rowAffected)
+
+	var username string
+	var email string
+	queryName := "SELECT username, email FROM users WHERE id = ?"
+	err = repository.Db.QueryRowContext(ctx, queryName, userID).Scan(&username, &email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			repository.logLogrus.WithFields(logrus.Fields{
+				"error":   err,
+				"message": "User not found",
+			}).Error("User not found")
+
+			return helpers.ApiResponse{Message: "User not found"}, http.StatusNotFound, err
+		}
+
+		repository.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Internal server error",
+		}).Error("Internal server error")
+
+		return helpers.ApiResponse{Message: "Internal server error"}, http.StatusInternalServerError, err
+	}
+
+	return helpers.ApiResponse{
+		Message: "Successfully updated profile",
+		Data: struct {
+			Username string `json:"username"`
+			Email    string `json:"email"`
+			Profile  string `json:"profile"`
+		}{
+			Username: username,
+			Email:    email,
+			Profile:  filename,
+		},
+	}, http.StatusOK, nil
+}
