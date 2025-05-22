@@ -224,7 +224,7 @@ func (repository *ManagementBookRepository) GetBookRepository(r *http.Request, b
 
 	var book identity.Book
 
-	query := "SELECT book_id, title, author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE book_id = ?"
+	query := "SELECT book_id, title, description ,author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE book_id = ?"
 	stmt, err := repository.db.PrepareContext(ctx, query)
 	if err != nil {
 		repository.logLogrus.WithFields(logrus.Fields{
@@ -240,7 +240,7 @@ func (repository *ManagementBookRepository) GetBookRepository(r *http.Request, b
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRowContext(ctx, bookID).Scan(&book.BookID, &book.Title, &book.Author, &book.Cover, &book.GenreID, &book.Isbn, &book.PublicationYear, &book.Quantity)
+	err = stmt.QueryRowContext(ctx, bookID).Scan(&book.BookID, &book.Title, &book.Description, &book.Author, &book.Cover, &book.GenreID, &book.Isbn, &book.PublicationYear, &book.Quantity)
 	if err != nil {
 		if errors.Is(sql.ErrNoRows, err) {
 			repository.logLogrus.WithFields(logrus.Fields{
@@ -297,19 +297,28 @@ func (repository *ManagementBookRepository) GetBookRepository(r *http.Request, b
 		return result, http.StatusInternalServerError, err
 	}
 
-	result := map[string]any{
-		"Title":           book.Title,
-		"Author":          book.Author,
-		"Cover":           book.Cover,
-		"Genre":           book.Genre,
-		"Isbn":            book.Isbn,
-		"PublicationYear": book.PublicationYear,
-		"Quantity":        book.Quantity,
+	bookResp := struct {
+		Title           string `json:"title"`
+		Description     string `json:"description"`
+		Author          string `json:"author"`
+		Cover           string `json:"cover"`
+		Genre           string `json:"genre"`
+		Isbn            string `json:"isbn"`
+		PublicationYear int    `json:"publication_year"`
+		Quantity        int    `json:"quantity"`
+	}{
+		Title:           book.Title,
+		Description:     book.Description,
+		Author:          book.Author,
+		Cover:           book.Cover,
+		Isbn:            book.Isbn,
+		PublicationYear: book.PublicationYear,
+		Quantity:        book.Quantity,
 	}
 
 	resultLate := helpers.ApiResponse{
 		Message: "Successfully retrieved book",
-		Data:    result,
+		Data:    bookResp,
 	}
 	return resultLate, http.StatusOK, nil
 }
@@ -434,6 +443,11 @@ func (repository *ManagementBookRepository) UpdateBookRepository(r *http.Request
 	if book.Title == "" {
 		book.Title = existingBook.Title
 	}
+
+	if book.Description == "" {
+		book.Description = existingBook.Description
+	}
+
 	if book.Author == "" {
 		book.Author = existingBook.Author
 	}
@@ -451,7 +465,7 @@ func (repository *ManagementBookRepository) UpdateBookRepository(r *http.Request
 
 	updateQuery := `
 		UPDATE books 
-		SET title = ?, author = ?, cover = ?, genre_id = ?, quantity = ?, updated_at = ?
+		SET title = ?, description = ?, author = ?, cover = ?, genre_id = ?, quantity = ?, updated_at = ?
 		WHERE book_id = ?`
 	stmt, err := repository.db.PrepareContext(ctx, updateQuery)
 	if err != nil {
@@ -465,7 +479,7 @@ func (repository *ManagementBookRepository) UpdateBookRepository(r *http.Request
 	defer stmt.Close()
 
 	now := time.Now().Format("2006-01-02 15:04:05")
-	result, err := stmt.ExecContext(ctx, book.Title, book.Author, book.Cover, book.GenreID, book.Quantity, now, book.BookID)
+	result, err := stmt.ExecContext(ctx, book.Title, book.Description, book.Author, book.Cover, book.GenreID, book.Quantity, now, book.BookID)
 	if err != nil {
 		repository.logLogrus.WithFields(logrus.Fields{
 			"error": err,
@@ -491,24 +505,32 @@ func (repository *ManagementBookRepository) UpdateBookRepository(r *http.Request
 
 	repository.logLogrus.WithField("rowsAffected", rowsAffected).Info("Successfully updated book")
 
-	updatedBook := map[string]interface{}{
-		"book_id":    book.BookID,
-		"title":      book.Title,
-		"author":     book.Author,
-		"cover":      book.Cover,
-		"genre_id":   book.GenreID,
-		"quantity":   book.Quantity,
-		"updated_at": now,
+	updateResp := struct {
+		BookID    int    `json:"book_id"`
+		Title     string `json:"title"`
+		Author    string `json:"author"`
+		Cover     string `json:"cover"`
+		GenreID   int    `json:"genre_id"`
+		Quantity  int    `json:"quantity"`
+		UpdatedAt string `json:"updated_at"`
+	}{
+		BookID:    book.BookID,
+		Title:     book.Title,
+		Author:    book.Author,
+		Cover:     book.Cover,
+		GenreID:   book.GenreID,
+		Quantity:  book.Quantity,
+		UpdatedAt: now,
 	}
 
-	return helpers.ApiResponse{Message: "Successfully updated book", Data: updatedBook}, http.StatusOK, nil
+	return helpers.ApiResponse{Message: "Successfully updated book", Data: updateResp}, http.StatusOK, nil
 }
 
 func (repository *ManagementBookRepository) SearchBooksRepository(r *http.Request, bookTitle string) (helpers.ApiResponse, int, error) {
 	ctx, cancel := context2.WithTimeout(context2.Background(), 4*time.Second)
 	defer cancel()
 
-	query := `SELECT book_id, title, author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE title LIKE ?`
+	query := `SELECT book_id, title, description,author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE title LIKE ?`
 	stmt, err := repository.db.PrepareContext(ctx, query)
 	if err != nil {
 		repository.logLogrus.WithFields(logrus.Fields{
@@ -699,7 +721,7 @@ func (repository *ManagementBookRepository) GetBooksGenreRepository(genreID int)
 	ctx, cancel := context2.WithTimeout(context2.Background(), 4*time.Second)
 	defer cancel()
 
-	query := "SELECT book_id, title, author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE genre_id = ?"
+	query := "SELECT book_id, title, description,author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE genre_id = ?"
 	stmt, err := repository.db.PrepareContext(ctx, query)
 	if err != nil {
 		repository.logLogrus.WithFields(logrus.Fields{
@@ -837,7 +859,7 @@ func (repository *ManagementBookRepository) AddFavoriteBookRepository(userID, bo
 		return helpers.ApiResponse{Message: "Failed to execute query", Data: nil}, http.StatusInternalServerError, err
 	}
 
-	queryBook := "SELECT book_id, title, author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE book_id = ?"
+	queryBook := "SELECT book_id, title, description,author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE book_id = ?"
 	stmt, err = repository.db.PrepareContext(ctx, queryBook)
 	if err != nil {
 		repository.logLogrus.WithFields(logrus.Fields{
@@ -1015,7 +1037,7 @@ func (repository *ManagementBookRepository) GetFavoriteBooksDBMysql(userID int) 
 			return helpers.ApiResponse{Message: "Failed to scan rows", Data: nil}, http.StatusInternalServerError, err
 		}
 
-		queryBooks := "SELECT title, author, cover, genre_id, isbn, publication_year, quantity FROM books WHERE book_id = ?"
+		queryBooks := "SELECT title, author, description,cover, genre_id, isbn, publication_year, quantity FROM books WHERE book_id = ?"
 		err = repository.db.QueryRowContext(ctx, queryBooks, book.BookID).Scan(&book.Title, &book.Author, &book.Cover, &book.GenreID, &book.Isbn, &book.PublicationYear, &book.Quantity)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -1177,4 +1199,11 @@ func (repository *ManagementBookRepository) DeleteFavoriteBookRepository(userID,
 	}
 
 	return helpers.ApiResponse{Message: "Success delete favorite books", Data: data}, http.StatusOK, nil
+}
+
+func (repository *ManagementBookRepository) returnContext() context2.Context {
+	ctx, cancel := context2.WithTimeout(context2.Background(), 4*time.Second)
+	defer cancel()
+
+	return ctx
 }

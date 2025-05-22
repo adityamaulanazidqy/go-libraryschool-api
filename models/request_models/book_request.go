@@ -18,13 +18,14 @@ type FavoriteBookRequest struct {
 }
 
 type BookUpdate struct {
-	BookID   int    `json:"book_id"`
-	Title    string `json:"title,omitempty"`
-	Author   string `json:"author,omitempty"`
-	Cover    string `json:"cover,omitempty"`
-	GenreID  int    `json:"genre_id,omitempty"`
-	Genre    string `json:"genre,omitempty"`
-	Quantity int    `json:"quantity,omitempty"`
+	BookID      int    `json:"book_id"`
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	Author      string `json:"author,omitempty"`
+	Cover       string `json:"cover,omitempty"`
+	GenreID     int    `json:"genre_id,omitempty"`
+	Genre       string `json:"genre,omitempty"`
+	Quantity    int    `json:"quantity,omitempty"`
 }
 
 type BookBorrowedRequest struct {
@@ -32,4 +33,9 @@ type BookBorrowedRequest struct {
 	UserID       int    `json:"user_id"`
 	BorrowedDate string `json:"borrowed_date"`
 	ReturnDate   string `json:"return_date"`
+}
+
+type HistoryRecordingBorrowed struct {
+	UserID     int `json:"user_id"`
+	BorrowedID int `json:"borrowed_id"`
 }

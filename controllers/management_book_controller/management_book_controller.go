@@ -3,6 +3,7 @@ package management_book_controller
 import (
 	"database/sql"
 	"encoding/json"
+	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"go-libraryschool/helpers"
@@ -131,12 +132,26 @@ func (controller *ManagementBookController) AddBook(w http.ResponseWriter, r *ht
 
 	book := identity.Book{
 		Title:           r.FormValue("title"),
+		Description:     r.FormValue("description"),
 		Author:          r.FormValue("author"),
 		Cover:           filename,
 		GenreID:         genreID,
 		Isbn:            r.FormValue("isbn"),
 		PublicationYear: publicationYear,
 		Quantity:        quantity,
+	}
+
+	validate := validator.New()
+	err = validate.Struct(book)
+	if err != nil {
+		controller.logLogrus.WithFields(logrus.Fields{
+			"error":   err,
+			"message": "Failed to validate book",
+		}).Error("Failed to validate book")
+
+		helpers.SendJson(w, http.StatusBadRequest, helpers.ApiResponse{
+			Message: "Failed to validate book",
+		})
 	}
 
 	responseRepo, code, err := controller.bookRepo.AddBookRepository(r, &book)

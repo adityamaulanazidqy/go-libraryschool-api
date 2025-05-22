@@ -21,7 +21,10 @@ func main() {
 	docs.SwaggerInfo.Host = "localhost:8080"
 	docs.SwaggerInfo.Schemes = []string{"http"}
 
-	db := config.ConnDB()
+	db, err := config.ConnDB()
+	if err != nil {
+		return
+	}
 
 	rdb := config.ConnRedis()
 
@@ -34,7 +37,7 @@ func main() {
 
 	otp_email_controller.SetOtpEmail()
 
-	err := http.ListenAndServe(":8080", mux)
+	err = http.ListenAndServe(":8080", mux)
 	if err != nil {
 		log.Fatal(err)
 	}
