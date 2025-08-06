@@ -1,9 +1,10 @@
 # 📚 Go Library School API
 
-A RESTful API for school library management system built with Go.
+A RESTful API built with Golang for managing a school library system. It handles book and user CRUD operations, book loans and returns, JWT-based authentication, and email notifications for overdue returns.
 
 ![Go Version](https://img.shields.io/badge/go-%3E%3D1.20-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Last Commit](https://img.shields.io/github/last-commit/adityamaulanazidqy/go-libraryschool-api)
 
 ## 🚀 Key Features
 
@@ -30,10 +31,10 @@ http://localhost:8080/swagger/index.html
 | Framework      | Native     |
 | Database       | MySQL 8.0  |
 | Cache          | Redis 7    |
-| Auth Email.    | Gomail     |
+| Email Sending    | Gomail     |
 | Documentation  | Swagger    |
 | Logging        | Logrus     |
-| Authentication  | JWT Token      |
+| Auth  | JWT Token      |
 
 ## 📁 Folder Structure
 
